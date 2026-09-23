@@ -1,0 +1,16 @@
+{{!-- Chat card posted when a meal or Soup is eaten (src/actions.ts eat()).
+      Soup passes no quality or effects, so the card stays quiet. --}}
+<div class="special-ingredient si-chat">
+  <p>{{localize "SPECIAL_INGREDIENT.Chat.Eats" actor=actor item=item}}</p>
+  {{#if quality}}
+    <p class="si-chat-quality">{{localize "SPECIAL_INGREDIENT.Field.quality"}}: <strong>{{quality}}</strong></p>
+  {{/if}}
+  {{#each effects}}
+    <div class="si-effect">
+      <div class="si-effect-title"><strong>{{type}}</strong> <span class="si-category">{{category}}</span></div>
+      {{#if params}}<div class="si-effect-params">{{params}}</div>{{/if}}
+      <div class="si-effect-meta">{{target}} · {{duration}}</div>
+      {{#if description}}<div class="si-effect-desc">{{description}}</div>{{/if}}
+    </div>
+  {{/each}}
+</div>

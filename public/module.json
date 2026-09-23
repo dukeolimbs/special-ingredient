@@ -1,0 +1,24 @@
+{
+  "id": "special-ingredient",
+  "title": "Special Ingredient",
+  "description": "Magical ingredients for dnd5e (2024 rules): define them, harvest specimens, reveal their secrets, and cook them into meals.",
+  "version": "0.1.0",
+  "authors": [
+    { "name": "Owen" }
+  ],
+  "compatibility": {
+    "minimum": "13",
+    "verified": "14"
+  },
+  "relationships": {
+    "systems": [{ "id": "dnd5e", "type": "system", "compatibility": { "minimum": "5.0.0" } }]
+  },
+  "esmodules": ["module.js"],
+  "styles": [{ "src": "styles/module.css" }],
+  "languages": [
+    { "lang": "en", "name": "English", "path": "lang/en.json" }
+  ],
+  "url": "",
+  "manifest": "",
+  "download": ""
+}

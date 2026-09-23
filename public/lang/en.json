@@ -1,0 +1,239 @@
+{
+  "SPECIAL_INGREDIENT": {
+    "Directory": {
+      "Create": "Create Ingredient"
+    },
+    "Ingredient": {
+      "NewName": "New Ingredient"
+    },
+    "Harvest": {
+      "Title": "Harvest: {name}",
+      "Quality": "Specimen Quality",
+      "Confirm": "Add to Inventory",
+      "GMOnly": "Only the GM can add Special Ingredients to an inventory."
+    },
+    "Prepare": {
+      "Confirm": "Prepare a meal using {name}? This spends one use.",
+      "Done": "You prepare {name}."
+    },
+    "Eat": {
+      "Confirm": "Eat {name}? This takes an Action."
+    },
+    "Meal": {
+      "Name": "Meal {name}"
+    },
+    "Soup": {
+      "Name": "Soup"
+    },
+    "Chat": {
+      "Eats": "{actor} eats {item}."
+    },
+    "Quality": {
+      "wretched": "Wretched",
+      "subpar": "Subpar",
+      "decent": "Decent",
+      "excellent": "Excellent",
+      "exceptional": "Exceptional"
+    },
+    "Target": {
+      "self": "Self",
+      "target": "Target",
+      "emanation": "Emanation",
+      "WithRange": "{target} ({range} ft)"
+    },
+    "Duration": {
+      "inst": "Instantaneous",
+      "turn": "Turns",
+      "round": "Rounds",
+      "minute": "Minutes",
+      "hour": "Hours",
+      "day": "Days",
+      "shortRest": "Until Short Rest",
+      "longRest": "Until Long Rest",
+      "disp": "Until Dispelled",
+      "perm": "Permanent",
+      "spec": "Special"
+    },
+    "Field": {
+      "Appearance": "Appearance",
+      "Aroma": "Aroma",
+      "quality": "Quality",
+      "flavour": "Flavour",
+      "spoilageRate": "Spoilage per Day",
+      "uses": "Uses (Remaining / Total)",
+      "TotalUses": "Total Uses",
+      "Spoilage": "Spoilage",
+      "UsesRemaining": "Uses Remaining",
+      "Target": "Target",
+      "Duration": "Duration",
+      "Description": "Description"
+    },
+    "Sheet": {
+      "Unknown": "(unknown)",
+      "Details": "Ingredient",
+      "Effects": "Effects",
+      "AddEffect": "Add Effect",
+      "DeleteEffect": "Delete Effect",
+      "NoEffects": "No effects at this quality.",
+      "DropSpell": "Drop a spell here",
+      "ClearSpell": "Remove Spell",
+      "MissingSpell": "(missing spell)",
+      "NotASpell": "Only spell items can be linked.",
+      "Feet": "ft",
+      "Reveal": "Reveal to Players",
+      "Hide": "Hide from Players",
+      "Spoiled": "Spoiled",
+      "Prepare": "Prepare Meal",
+      "Eat": "Eat",
+      "ActionCost": "Eating takes an Action.",
+      "Invalid": "This item is missing its Special Ingredient data."
+    },
+    "Effect": {
+      "Category": {
+        "ability": "Ability Scores",
+        "checks": "Skills & Ability Checks",
+        "saves": "Saving Throws",
+        "attacks": "Attacks & Damage",
+        "defence": "Defence & Hit Points",
+        "movement": "Movement",
+        "senses": "Senses & Communication",
+        "actions": "Action Economy & Initiative",
+        "conditions": "Conditions",
+        "form": "Size & Form",
+        "spell": "Spell Effect",
+        "misc": "Miscellaneous"
+      },
+      "Type": {
+        "ability": {
+          "setScore": "Set Score",
+          "reduceScore": "Reduce Score",
+          "checkMode": "Advantage/Disadvantage on Ability"
+        },
+        "checks": {
+          "bonus": "Check Bonus",
+          "mode": "Advantage/Disadvantage on Checks",
+          "proficiency": "Temporary Proficiency/Expertise"
+        },
+        "saves": {
+          "bonus": "Save Bonus",
+          "mode": "Advantage/Disadvantage on Saves",
+          "autoFail": "Automatic Failure",
+          "concentration": "Advantage on Concentration"
+        },
+        "attacks": {
+          "bonus": "Attack Bonus",
+          "extraDamage": "Extra Damage",
+          "mode": "Advantage/Disadvantage on Attacks",
+          "damageType": "Change Damage Type / Magical",
+          "critRange": "Expanded Critical Range"
+        },
+        "defence": {
+          "ac": "Armour Class",
+          "damageTrait": "Resistance/Immunity/Vulnerability",
+          "tempHp": "Temporary Hit Points",
+          "maxHp": "Maximum Hit Points",
+          "healing": "Healing",
+          "deathSaves": "Advantage on Death Saves",
+          "maxHealing": "Maximised Healing",
+          "diseasePoison": "Disease/Poison Immunity"
+        },
+        "movement": {
+          "speed": "Speed Change",
+          "newType": "New Movement Type",
+          "jump": "Jump Distance",
+          "freedom": "Ignore Difficult Terrain/Restraints",
+          "special": "Water/Wall Walking, Teleport"
+        },
+        "senses": {
+          "sense": "Special Sense",
+          "seeInvisible": "See Invisibility",
+          "language": "Languages/Telepathy"
+        },
+        "actions": {
+          "extra": "Gain Action",
+          "lose": "Lose Action",
+          "initiative": "Initiative"
+        },
+        "conditions": {
+          "apply": "Apply Condition",
+          "immunity": "Condition Immunity",
+          "remove": "Remove Condition"
+        },
+        "form": {
+          "size": "Size Change",
+          "statBlock": "Stat Block Replacement",
+          "cosmetic": "Appearance Change",
+          "gaseous": "Gaseous/Incorporeal Form"
+        },
+        "spell": {
+          "cast": "Cast Spell"
+        },
+        "misc": {
+          "waterBreathing": "Water Breathing / No Air",
+          "spellStat": "Spell Save DC / Attack Bonus",
+          "other": "Other"
+        }
+      },
+      "Param": {
+        "ability": "Ability",
+        "value": "Value",
+        "amount": "Amount",
+        "mode": "Mode",
+        "check": "Check",
+        "bonus": "Bonus",
+        "skill": "Skill",
+        "level": "Level",
+        "save": "Save",
+        "attackKind": "Attacks",
+        "formula": "Formula",
+        "damageType": "Damage Type",
+        "direction": "Applies To",
+        "magical": "Magical",
+        "threshold": "Crits On",
+        "acMode": "AC Mode",
+        "trait": "Trait",
+        "healMode": "Healing",
+        "immunity": "Immune To",
+        "movement": "Movement",
+        "speedMode": "Change",
+        "speed": "Speed (ft)",
+        "multiplier": "Multiplier",
+        "specialMove": "Kind",
+        "distance": "Distance (ft)",
+        "sense": "Sense",
+        "range": "Range (ft)",
+        "languageMode": "Kind",
+        "language": "Language",
+        "actionKind": "Action",
+        "initiativeMode": "Kind",
+        "condition": "Condition",
+        "size": "Size",
+        "creature": "Creature",
+        "spell": "Spell",
+        "dc": "Save DC",
+        "attack": "Attack Bonus",
+        "spellStat": "Stat"
+      }
+    },
+    "Choice": {
+      "mode": { "advantage": "Advantage", "disadvantage": "Disadvantage" },
+      "check": { "all": "All Checks" },
+      "save": { "all": "All Saves" },
+      "movement": { "all": "All Speeds" },
+      "remove": { "curse": "Curse" },
+      "proficiency": { "proficient": "Proficient", "expertise": "Expertise" },
+      "attackKind": { "all": "All", "melee": "Melee", "ranged": "Ranged", "weapon": "Weapon", "spell": "Spell" },
+      "direction": { "made": "Attacks Made", "against": "Attacks Against" },
+      "acMode": { "bonus": "Bonus", "base": "New Base", "minimum": "Minimum" },
+      "trait": { "resistance": "Resistance", "immunity": "Immunity", "vulnerability": "Vulnerability" },
+      "healMode": { "instant": "Instant", "overTime": "Over Time" },
+      "immunity": { "disease": "Disease", "poison": "Poison", "both": "Disease & Poison" },
+      "speedMode": { "add": "Add", "multiply": "Multiply", "set": "Set" },
+      "specialMove": { "waterWalk": "Water Walking", "wallWalk": "Wall Walking", "teleport": "Teleport" },
+      "languageMode": { "understand": "Understand", "speak": "Speak", "telepathy": "Telepathy" },
+      "actionKind": { "action": "Action", "bonus": "Bonus Action", "reaction": "Reaction" },
+      "initiativeMode": { "bonus": "Bonus", "advantage": "Advantage" },
+      "spellStat": { "dc": "Save DC", "attack": "Attack Bonus" }
+    }
+  }
+}
