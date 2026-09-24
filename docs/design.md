@@ -127,11 +127,7 @@ params to Active Effect changes. No data migration is needed.
 
 ## 6. Backlog
 
-- **[High] Spoilage auto-advance with world time.** Current spoilage increases
-  by the daily rate as `game.time` advances.
-- **Meal spoilage.** Decide whether meals spoil, and how.
-- **Effect automation.** Implement registry `apply` handlers as Active Effects.
-- **Compendium-held definitions.**
+Moved to [backlog.md](backlog.md).
 
 ## 7. Open questions
 
