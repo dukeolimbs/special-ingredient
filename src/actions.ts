@@ -6,29 +6,123 @@
 
 import { ICONS, MODULE_ID, SHEET_ID, t, tf, TEMPLATES } from "./constants";
 import {
-  defaultIngredient, flagPath, getFlags, isSpecimen, isSpoiled, newSpecimen, QUALITY_LEVELS, sortedEffects,
+  defaultIngredient, deletionUpdate, flagPath, getFlags, isSpecimen, isSpoiled, newSpecimen, QUALITY_LEVELS, sortedEffects,
   type EffectMap, type MealData, type ModuleFlags, type Quality, type RevealableField,
 } from "./data";
-import { linkedSpellUuid } from "./effects";
+import { CATEGORIES, categoryLabel, EFFECT_TYPES, effectTypeLabel, linkedSpellUuid } from "./effects";
 import { effectView, qualityLabel } from "./format";
 
 const { DialogV2 } = foundry.applications.api;
+
+/** dnd5e's dialog styling (parchment, fonts) plus our scope. */
+export const DIALOG_CLASSES = ["dnd5e2", MODULE_ID];
 
 /* -------------------------------------------- */
 /*  Definitions                                 */
 /* -------------------------------------------- */
 
-/** Create a new ingredient definition in the Items sidebar and open its sheet. */
+/**
+ * The Items folder that holds ingredient definitions, created on first use. It is found by
+ * flag rather than name, so the GM can rename or move it.
+ */
+async function ingredientFolder(): Promise<any> {
+  const existing = game.folders.find((f: any) => f.type === "Item" && f.getFlag(MODULE_ID, "ingredients"));
+  if (existing) return existing;
+  return Folder.implementation.create({
+    name: t("Directory.Folder"),
+    type: "Item",
+    flags: { [MODULE_ID]: { ingredients: true } },
+  });
+}
+
+/** Create a new ingredient definition in the ingredients folder and open its sheet. */
 export async function createDefinition(): Promise<void> {
   const flags: ModuleFlags = { kind: "ingredient", ingredient: defaultIngredient() };
+  const folder = await ingredientFolder();
   const item = await Item.implementation.create({
     name: t("Ingredient.NewName"),
+    folder: folder?.id ?? null,
     type: "consumable",
     img: ICONS.ingredient,
     system: { type: { value: "food" } },
     flags: { core: { sheetClass: SHEET_ID }, [MODULE_ID]: flags },
   });
   item?.sheet?.render(true);
+}
+
+/**
+ * Copy the effects of another quality level into `level`, asking which level to copy
+ * from and whether to replace the existing effects or add to them. Copies get new ids.
+ */
+export async function copyEffects(item: any, level: Quality): Promise<void> {
+  const levels = getFlags(item)?.ingredient?.levels;
+  if (!levels) return;
+
+  const sources = QUALITY_LEVELS.filter((q) => q !== level && Object.keys(levels[q]?.effects ?? {}).length);
+  if (!sources.length) {
+    ui.notifications.warn(t("Copy.NothingToCopy"));
+    return;
+  }
+
+  const options = sources.map((q) => {
+    const count = Object.keys(levels[q].effects).length;
+    return `<option value="${q}">${tf("Copy.Option", { quality: qualityLabel(q), count })}</option>`;
+  }).join("");
+  const result = await DialogV2.input({
+    classes: DIALOG_CLASSES,
+    window: { title: tf("Copy.Title", { quality: qualityLabel(level) }), icon: "fas fa-copy" },
+    content: `<div class="form-group">
+        <label>${t("Copy.From")}</label>
+        <div class="form-fields"><select name="source">${options}</select></div>
+      </div>
+      <div class="form-group">
+        <label>${t("Copy.Replace")}</label>
+        <div class="form-fields"><input type="checkbox" name="replace"></div>
+      </div>`,
+    ok: { label: t("Copy.Confirm"), icon: "fas fa-copy" },
+  });
+  const source = result?.source as Quality | undefined;
+  if (!source || !sources.includes(source)) return;
+
+  const path = flagPath(`ingredient.levels.${level}.effects`);
+  const existing = levels[level]?.effects ?? {};
+  const update: Record<string, unknown> = {};
+  let sort = 0;
+  if (result.replace) {
+    for (const id of Object.keys(existing)) Object.assign(update, deletionUpdate(path, id));
+  } else {
+    sort = Math.max(0, ...Object.values(existing).map((e) => e.sort ?? 0));
+  }
+  for (const [, effect] of sortedEffects(levels[source].effects)) {
+    update[`${path}.${foundry.utils.randomID()}`] = { ...foundry.utils.deepClone(effect), sort: ++sort };
+  }
+  await item.update(update);
+}
+
+/** Ask the GM which kind of effect to add to `level`. Resolves to a registry key, or null if cancelled. */
+export async function promptEffectType(level: Quality): Promise<string | null> {
+  const groups = CATEGORIES.map((category) => {
+    const types = [...EFFECT_TYPES.values()]
+      .filter((d) => d.category === category)
+      .map((d) => `<option value="${d.key}">${effectTypeLabel(d.key)}</option>`)
+      .join("");
+    return `<optgroup label="${categoryLabel(category)}">${types}</optgroup>`;
+  }).join("");
+  const result = await DialogV2.input({
+    classes: DIALOG_CLASSES,
+    window: { title: tf("AddEffect.Title", { quality: qualityLabel(level) }), icon: "fas fa-plus" },
+    content: `<div class="form-group">
+        <label>${t("Sheet.EffectType")}</label>
+        <div class="form-fields">
+          <select name="type" required autofocus>
+            <option value="" disabled selected>${t("AddEffect.Choose")}</option>${groups}
+          </select>
+        </div>
+      </div>`,
+    ok: { label: t("Sheet.AddEffect"), icon: "fas fa-plus" },
+  });
+  const type = result?.type;
+  return typeof type === "string" && EFFECT_TYPES.has(type) ? type : null;
 }
 
 /* -------------------------------------------- */
@@ -40,7 +134,8 @@ async function promptQuality(name: string): Promise<Quality | null> {
     (q) => `<option value="${q}"${q === "decent" ? " selected" : ""}>${qualityLabel(q)}</option>`,
   ).join("");
   const result = await DialogV2.input({
-    window: { title: tf("Harvest.Title", { name }) },
+    classes: DIALOG_CLASSES,
+    window: { title: tf("Harvest.Title", { name }), icon: "fas fa-seedling" },
     content: `<div class="form-group">
         <label>${t("Harvest.Quality")}</label>
         <div class="form-fields"><select name="quality">${options}</select></div>
@@ -141,7 +236,9 @@ function mealData(specimenItem: any): object {
     name: tf("Meal.Name", { name: specimenItem.name }),
     type: "consumable",
     img: ICONS.meal,
-    system: { type: { value: "food" }, quantity: 1, activities: castActivities(effects) },
+    // No activities yet: they are added when the meal is eaten (see castSpells), so that using
+    // the meal from the sheet reaches our eat flow instead of casting directly.
+    system: { type: { value: "food" }, quantity: 1 },
     flags: { core: { sheetClass: SHEET_ID }, [MODULE_ID]: { kind: "meal", meal } },
   };
 }
@@ -165,7 +262,8 @@ export async function prepare(item: any): Promise<void> {
   if (!flags?.ingredient || !flags.specimen || !item.actor?.isOwner) return;
 
   const confirmed = await DialogV2.confirm({
-    window: { title: item.name },
+    classes: DIALOG_CLASSES,
+    window: { title: item.name, icon: "fas fa-kitchen-set" },
     content: `<p>${tf("Prepare.Confirm", { name: item.name })}</p>`,
   });
   if (!confirmed) return;
@@ -194,6 +292,9 @@ async function applyBlinded(actor: any): Promise<void> {
 
 /** Cast a meal's linked spells, keeping the cast cards usable after the meal is deleted. */
 async function castSpells(item: any): Promise<void> {
+  const activities = castActivities(getFlags(item)?.meal?.effects ?? {});
+  if (foundry.utils.isEmpty(activities)) return;
+  await item.update({ "system.activities": activities });
   const casts = item.system.activities?.getByType?.("cast") ?? [];
   for (const activity of casts) {
     const results = await activity.use({ consume: { spellSlot: false } }, {}, {});
@@ -210,7 +311,8 @@ export async function eat(item: any): Promise<void> {
   if (!flags || !actor?.isOwner) return;
 
   const confirmed = await DialogV2.confirm({
-    window: { title: item.name },
+    classes: DIALOG_CLASSES,
+    window: { title: item.name, icon: "fas fa-utensils" },
     content: `<p>${tf("Eat.Confirm", { name: item.name })}</p>`,
   });
   if (!confirmed) return;
@@ -220,7 +322,7 @@ export async function eat(item: any): Promise<void> {
 
   if (flags.kind === "soup") {
     // Stays quiet: nothing on the card mentions what the Soup does.
-    const content = await renderTemplate(`${TEMPLATES}/chat-eat.hbs`, { actor: actor.name, item: item.name });
+    const content = await renderTemplate(`${TEMPLATES}/chat-eat.hbs`, { actor: actor.name, item: item.name, img: item.img });
     await ChatMessage.create({ speaker, content });
     await applyBlinded(actor);
     await item.delete();
@@ -235,7 +337,9 @@ export async function eat(item: any): Promise<void> {
   const content = await renderTemplate(`${TEMPLATES}/chat-eat.hbs`, {
     actor: actor.name,
     item: item.name,
+    img: item.img,
     quality: qualityLabel(meal.quality),
+    qualityKey: meal.quality,
     effects: sortedEffects(meal.effects).map(([id, effect]) => effectView(id, effect)),
   });
   await ChatMessage.create({ speaker, content });

@@ -25,15 +25,13 @@ Hooks.once("init", () => {
   foundry.applications.handlebars.loadTemplates([`${TEMPLATES}/sheet.hbs`, `${TEMPLATES}/chat-eat.hbs`]);
 });
 
-// dnd5e has set CONFIG.Item.documentClass by now.
-Hooks.once("setup", () => {
-  // Route every "use" of an owned ingredient, meal or Soup (sheet, favourites, hotbar) to our flows.
-  const proto = CONFIG.Item.documentClass.prototype;
-  const original = proto.use;
-  proto.use = function (this: any, ...args: unknown[]) {
-    if (this.isEmbedded && kindOf(this)) return useItem(this);
-    return original.apply(this, args);
-  };
+// Route every "use" of an owned ingredient, meal or Soup (sheet, favourites, hotbar) to our flows.
+// Our items have no activities, so dnd5e's Item#use falls through to displayCard; cancelling the
+// card here takes over without patching Item#use (which other modules, e.g. Midi-QOL, wrap).
+Hooks.on("dnd5e.preDisplayCard", (item: any) => {
+  if (!item?.isEmbedded || !kindOf(item)) return;
+  useItem(item);
+  return false;
 });
 
 // Dropping a definition onto a character sheet opens the Specimen Quality dialog instead of copying it.

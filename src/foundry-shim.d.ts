@@ -19,5 +19,6 @@ declare const foundry: any;
 declare const Item: any;
 declare const ActiveEffect: any;
 declare const ChatMessage: any;
+declare const Folder: any;
 declare function fromUuid(uuid: string, options?: object): Promise<any>;
 declare function fromUuidSync(uuid: string, options?: object): any;

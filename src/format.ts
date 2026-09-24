@@ -2,7 +2,9 @@
 
 import { t, tf } from "./constants";
 import { SCALAR_DURATION_UNITS, type EffectData } from "./data";
-import { categoryLabel, effectTypeLabel, EFFECT_TYPES, summarizeParams } from "./effects";
+import {
+  categoryLabel, durationRule, effectIcon, effectTypeLabel, EFFECT_TYPES, normalizedDuration, summarizeParams,
+} from "./effects";
 
 export function qualityLabel(quality: string): string {
   return t(`Quality.${quality}`);
@@ -16,14 +18,15 @@ export function targetLabel(effect: EffectData): string {
 }
 
 export function durationLabel(effect: EffectData): string {
-  const { value, units } = effect.duration ?? { value: null, units: "inst" };
-  const label = t(`Duration.${units}`);
-  if (!SCALAR_DURATION_UNITS.has(units) || !value) return label;
-  return `${value} ${label}`;
+  if (durationRule(effect) === "spell") return t("Duration.AsSpell");
+  const { value, units } = normalizedDuration(effect);
+  if (!SCALAR_DURATION_UNITS.has(units) || !value) return t(`Duration.${units}`);
+  return tf(`Duration.Count.${units}.${value === 1 ? "one" : "other"}`, { n: value });
 }
 
 export interface EffectView {
   id: string;
+  icon: string;
   category: string;
   type: string;
   params: string;
@@ -36,6 +39,7 @@ export function effectView(id: string, effect: EffectData): EffectView {
   const def = EFFECT_TYPES.get(effect.type);
   return {
     id,
+    icon: effectIcon(effect.type),
     category: def ? categoryLabel(def.category) : "",
     type: effectTypeLabel(effect.type),
     params: summarizeParams(effect),

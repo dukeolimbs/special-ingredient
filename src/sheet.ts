@@ -7,14 +7,17 @@
  * equal to SHEET_CLASS_NAME.
  */
 
-import { eat, prepare, toggleEffectReveal, toggleFieldReveal } from "./actions";
+import { copyEffects, eat, promptEffectType, prepare, toggleEffectReveal, toggleFieldReveal } from "./actions";
 import { MODULE_ID, t, TEMPLATES } from "./constants";
 import {
-  defaultEffect, deletionUpdate, DURATION_UNITS, flagPath, getFlags, isSpoiled, QUALITY_LEVELS,
+  defaultEffect, deletionUpdate, flagPath, getFlags, isSpoiled, QUALITY_LEVELS,
   REVEALABLE_FIELDS, SCALAR_DURATION_UNITS, sortedEffects, TARGET_KINDS, usesRemaining,
   type EffectData, type EffectMap, type Quality, type RevealableField,
 } from "./data";
-import { CATEGORIES, categoryLabel, DEFAULT_EFFECT_TYPE, EFFECT_TYPES, effectTypeLabel, paramLabel } from "./effects";
+import {
+  allowedDurationUnits, CATEGORIES, categoryLabel, durationRule, EFFECT_TYPES, effectIcon,
+  effectTypeLabel, normalizedDuration, paramLabel,
+} from "./effects";
 import { effectView, qualityLabel } from "./format";
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -28,14 +31,30 @@ function options(choices: Record<string, string>, selected: unknown): Option[] {
 
 const effectsPath = (level: string) => flagPath(`ingredient.levels.${level}.effects`);
 
+/** Duration controls for an effect: a unit picker limited to what fits its type, or fixed text. */
+function durationFields(effect: EffectData) {
+  const rule = durationRule(effect);
+  if (rule === "spell") return { durationFixed: t("Duration.AsSpell") };
+  if (rule === "instant") return { durationFixed: t("Duration.inst") };
+  const duration = normalizedDuration(effect);
+  const choices = Object.fromEntries(allowedDurationUnits(rule).map((u) => [u, t(`Duration.${u}`)]));
+  return {
+    durationOptions: options(choices, duration.units),
+    showDurationValue: SCALAR_DURATION_UNITS.has(duration.units),
+    durationValue: duration.value ?? "",
+  };
+}
+
 export class IngredientSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   static DEFAULT_OPTIONS = {
-    classes: [MODULE_ID],
-    position: { width: 620, height: 720 },
+    // dnd5e's own item-sheet classes, so the system stylesheet dresses this sheet.
+    classes: ["dnd5e2", "sheet", "item", "standard-form", MODULE_ID],
+    position: { width: 560, height: "auto" },
     window: { resizable: true },
     form: { submitOnChange: true },
     actions: {
       addEffect: IngredientSheet.#onAddEffect,
+      copyEffects: IngredientSheet.#onCopyEffects,
       deleteEffect: IngredientSheet.#onDeleteEffect,
       clearSpell: IngredientSheet.#onClearSpell,
       openSpell: IngredientSheet.#onOpenSpell,
@@ -46,10 +65,10 @@ export class IngredientSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   };
 
   static PARTS = {
-    body: { template: `${TEMPLATES}/sheet.hbs`, scrollable: [".si-body"] },
+    body: { template: `${TEMPLATES}/sheet.hbs`, scrollable: [".tab.details", ".tab.effects"] },
   };
 
-  tabGroups: Record<string, string> = { level: "wretched" };
+  tabGroups: Record<string, string> = { primary: "details", level: "wretched" };
 
   /* -------------------------------------------- */
   /*  Context                                     */
@@ -59,6 +78,11 @@ export class IngredientSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     const context = await this.#buildContext(await super._prepareContext(options));
     // Handlebars has no equality helper we can rely on across versions; expose one flag per mode.
     context[`mode_${context.mode}`] = true;
+    if (context.mode === "editor" || context.mode === "specimen") {
+      const active = this.tabGroups.primary;
+      context.tabs = ["details", "effects"].map((id) => ({ id, label: t(`Sheet.Tab.${id}`), active: id === active }));
+      context.tabActive = { [active]: true };
+    }
     return context;
   }
 
@@ -67,15 +91,18 @@ export class IngredientSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     const flags = getFlags(item);
     const isGM = game.user.isGM;
     const base = { ...context, item, isGM, name: item.name, img: item.img };
+    const subtitle = (label: string, classes = "") => ({ label, classes });
 
-    if (flags?.kind === "soup") return { ...base, mode: "soup", canEat: item.isEmbedded && item.isOwner };
+    if (flags?.kind === "soup") {
+      return { ...base, mode: "soup", subtitles: [subtitle(t("Sheet.Food"))], canEat: item.isEmbedded && item.isOwner };
+    }
 
     if (flags?.kind === "meal" && flags.meal) {
       return {
         ...base,
         mode: "meal",
+        subtitles: [subtitle(t("Sheet.Meal")), subtitle(t("Sheet.ActionCost"))],
         canEat: item.isEmbedded && item.isOwner,
-        activation: t("Sheet.ActionCost"),
         effects: this.#revealableEffects(flags.meal.effects, flags.meal.revealed ?? {}, isGM),
       };
     }
@@ -84,11 +111,14 @@ export class IngredientSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     if (!ingredient) return { ...base, mode: "invalid" };
 
     if (!flags.specimen) {
-      if (isGM && this.isEditable) return { ...base, mode: "editor", ...this.#editorContext(ingredient) };
+      if (isGM && this.isEditable) {
+        return { ...base, mode: "editor", subtitles: [subtitle(t("Sheet.Ingredient"))], ...this.#editorContext(ingredient) };
+      }
       // A player looking at a definition sees it as an unidentified ingredient.
       return {
         ...base,
         mode: "specimen",
+        subtitles: [subtitle(t("Sheet.Ingredient"))],
         rows: [
           this.#row("Appearance", ingredient.appearance),
           this.#row("Aroma", ingredient.aroma),
@@ -106,9 +136,16 @@ export class IngredientSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       spoilageRate: `${ingredient.spoilageRate}%`,
       uses: `${remaining} / ${ingredient.uses}`,
     };
+    const qualityKnown = isGM || specimen.revealed.quality;
+    const spoiled = isSpoiled(specimen);
     return {
       ...base,
       mode: "specimen",
+      subtitles: [
+        subtitle(t("Sheet.Ingredient")),
+        ...(qualityKnown ? [subtitle(qualityLabel(specimen.quality), `si-quality-${specimen.quality}`)] : []),
+        ...(spoiled ? [subtitle(t("Sheet.Spoiled"), "si-spoiled")] : []),
+      ],
       rows: [
         this.#row("Appearance", ingredient.appearance),
         this.#row("Aroma", ingredient.aroma),
@@ -123,8 +160,10 @@ export class IngredientSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
           };
         }),
       ],
+      spoilageBlock: item.isEmbedded,
       spoilage: specimen.spoilage,
-      spoiled: isSpoiled(specimen),
+      spoiled,
+      showUsesInput: isGM && item.isEmbedded,
       usesRemaining: remaining,
       usesTotal: ingredient.uses,
       effects: this.#revealableEffects(
@@ -158,7 +197,6 @@ export class IngredientSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       }));
 
     const targetChoices = Object.fromEntries(TARGET_KINDS.map((k) => [k, t(`Target.${k}`)]));
-    const durationChoices = Object.fromEntries(DURATION_UNITS.map((u) => [u, t(`Duration.${u}`)]));
 
     const effectRow = (level: Quality, id: string, effect: EffectData) => {
       const path = `${effectsPath(level)}.${id}`;
@@ -181,14 +219,13 @@ export class IngredientSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         id,
         level,
         path,
+        icon: effectIcon(effect.type),
         typeGroups: typeGroups(effect.type),
         params,
         targetOptions: options(targetChoices, effect.target?.kind),
         showRange: effect.target?.kind !== "self",
         range: effect.target?.range ?? "",
-        durationOptions: options(durationChoices, effect.duration?.units),
-        showDurationValue: SCALAR_DURATION_UNITS.has(effect.duration?.units),
-        durationValue: effect.duration?.value ?? "",
+        ...durationFields(effect),
         description: effect.description ?? "",
       };
     };
@@ -211,6 +248,17 @@ export class IngredientSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   _processFormData(event: any, form: any, formData: any): Record<string, unknown> {
     const data = super._processFormData(event, form, formData);
     const flags = getFlags(this.document);
+
+    // Keep each effect's duration valid for its (possibly just changed) type and params.
+    const submittedLevels = foundry.utils.getProperty(data, flagPath("ingredient.levels")) ?? {};
+    for (const [level, submitted] of Object.entries<any>(submittedLevels)) {
+      for (const [id, effect] of Object.entries<any>(submitted?.effects ?? {})) {
+        const stored = flags?.ingredient?.levels[level as Quality]?.effects?.[id];
+        if (!stored) continue;
+        const merged = foundry.utils.mergeObject(foundry.utils.deepClone(stored), effect, { inplace: false });
+        effect.duration = normalizedDuration(merged);
+      }
+    }
     const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
     // The GM edits uses as "remaining"; store them as uses spent.
@@ -263,12 +311,19 @@ export class IngredientSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   /*  Actions                                     */
   /* -------------------------------------------- */
 
+  static async #onCopyEffects(this: IngredientSheet, _event: PointerEvent, target: HTMLElement): Promise<void> {
+    await copyEffects(this.document, target.dataset.level as Quality);
+  }
+
   static async #onAddEffect(this: IngredientSheet, _event: PointerEvent, target: HTMLElement): Promise<void> {
     const level = target.dataset.level as Quality;
+    const type = await promptEffectType(level);
+    if (!type) return;
     const effects = getFlags(this.document)?.ingredient?.levels[level]?.effects ?? {};
     const sort = Math.max(0, ...Object.values(effects).map((e) => e.sort ?? 0)) + 1;
-    const id = foundry.utils.randomID();
-    await this.document.update({ [`${effectsPath(level)}.${id}`]: defaultEffect(DEFAULT_EFFECT_TYPE, sort) });
+    const effect = defaultEffect(type, sort);
+    effect.duration = normalizedDuration(effect);
+    await this.document.update({ [`${effectsPath(level)}.${foundry.utils.randomID()}`]: effect });
   }
 
   static async #onDeleteEffect(this: IngredientSheet, _event: PointerEvent, target: HTMLElement): Promise<void> {

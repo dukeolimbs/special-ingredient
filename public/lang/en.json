@@ -1,7 +1,8 @@
 {
   "SPECIAL_INGREDIENT": {
     "Directory": {
-      "Create": "Create Ingredient"
+      "Create": "Create Ingredient",
+      "Folder": "Special Ingredients"
     },
     "Ingredient": {
       "NewName": "New Ingredient"
@@ -26,7 +27,7 @@
       "Name": "Soup"
     },
     "Chat": {
-      "Eats": "{actor} eats {item}."
+      "Eats": "Eaten by {actor}"
     },
     "Quality": {
       "wretched": "Wretched",
@@ -52,7 +53,30 @@
       "longRest": "Until Long Rest",
       "disp": "Until Dispelled",
       "perm": "Permanent",
-      "spec": "Special"
+      "spec": "Special",
+      "AsSpell": "As Spell",
+      "Count": {
+        "turn": {
+          "one": "{n} Turn",
+          "other": "{n} Turns"
+        },
+        "round": {
+          "one": "{n} Round",
+          "other": "{n} Rounds"
+        },
+        "minute": {
+          "one": "{n} Minute",
+          "other": "{n} Minutes"
+        },
+        "hour": {
+          "one": "{n} Hour",
+          "other": "{n} Hours"
+        },
+        "day": {
+          "one": "{n} Day",
+          "other": "{n} Days"
+        }
+      }
     },
     "Field": {
       "Appearance": "Appearance",
@@ -70,7 +94,6 @@
     },
     "Sheet": {
       "Unknown": "(unknown)",
-      "Details": "Ingredient",
       "Effects": "Effects",
       "AddEffect": "Add Effect",
       "DeleteEffect": "Delete Effect",
@@ -85,8 +108,20 @@
       "Spoiled": "Spoiled",
       "Prepare": "Prepare Meal",
       "Eat": "Eat",
-      "ActionCost": "Eating takes an Action.",
-      "Invalid": "This item is missing its Special Ingredient data."
+      "ActionCost": "Action",
+      "Invalid": "This item is missing its Special Ingredient data.",
+      "Tab": {
+        "details": "Details",
+        "effects": "Effects"
+      },
+      "Senses": "Characteristics",
+      "Usage": "Usage",
+      "SpoilagePercent": "% Spoiled",
+      "Food": "Food",
+      "Meal": "Meal",
+      "Ingredient": "Special Ingredient",
+      "EffectType": "Effect Type",
+      "CopyFrom": "Copy from…"
     },
     "Effect": {
       "Category": {
@@ -106,6 +141,7 @@
       "Type": {
         "ability": {
           "setScore": "Set Score",
+          "improveScore": "Improve Score",
           "reduceScore": "Reduce Score",
           "checkMode": "Advantage/Disadvantage on Ability"
         },
@@ -212,28 +248,101 @@
         "spell": "Spell",
         "dc": "Save DC",
         "attack": "Attack Bonus",
-        "spellStat": "Stat"
+        "spellStat": "Stat",
+        "maximum": "Maximum"
       }
     },
     "Choice": {
-      "mode": { "advantage": "Advantage", "disadvantage": "Disadvantage" },
-      "check": { "all": "All Checks" },
-      "save": { "all": "All Saves" },
-      "movement": { "all": "All Speeds" },
-      "remove": { "curse": "Curse" },
-      "proficiency": { "proficient": "Proficient", "expertise": "Expertise" },
-      "attackKind": { "all": "All", "melee": "Melee", "ranged": "Ranged", "weapon": "Weapon", "spell": "Spell" },
-      "direction": { "made": "Attacks Made", "against": "Attacks Against" },
-      "acMode": { "bonus": "Bonus", "base": "New Base", "minimum": "Minimum" },
-      "trait": { "resistance": "Resistance", "immunity": "Immunity", "vulnerability": "Vulnerability" },
-      "healMode": { "instant": "Instant", "overTime": "Over Time" },
-      "immunity": { "disease": "Disease", "poison": "Poison", "both": "Disease & Poison" },
-      "speedMode": { "add": "Add", "multiply": "Multiply", "set": "Set" },
-      "specialMove": { "waterWalk": "Water Walking", "wallWalk": "Wall Walking", "teleport": "Teleport" },
-      "languageMode": { "understand": "Understand", "speak": "Speak", "telepathy": "Telepathy" },
-      "actionKind": { "action": "Action", "bonus": "Bonus Action", "reaction": "Reaction" },
-      "initiativeMode": { "bonus": "Bonus", "advantage": "Advantage" },
-      "spellStat": { "dc": "Save DC", "attack": "Attack Bonus" }
+      "mode": {
+        "advantage": "Advantage",
+        "disadvantage": "Disadvantage"
+      },
+      "check": {
+        "all": "All Checks"
+      },
+      "save": {
+        "all": "All Saves"
+      },
+      "movement": {
+        "all": "All Speeds"
+      },
+      "remove": {
+        "curse": "Curse"
+      },
+      "proficiency": {
+        "proficient": "Proficient",
+        "expertise": "Expertise"
+      },
+      "attackKind": {
+        "all": "All",
+        "melee": "Melee",
+        "ranged": "Ranged",
+        "weapon": "Weapon",
+        "spell": "Spell"
+      },
+      "direction": {
+        "made": "Attacks Made",
+        "against": "Attacks Against"
+      },
+      "acMode": {
+        "bonus": "Bonus",
+        "base": "New Base",
+        "minimum": "Minimum"
+      },
+      "trait": {
+        "resistance": "Resistance",
+        "immunity": "Immunity",
+        "vulnerability": "Vulnerability"
+      },
+      "healMode": {
+        "instant": "Instant",
+        "overTime": "Over Time"
+      },
+      "immunity": {
+        "disease": "Disease",
+        "poison": "Poison",
+        "both": "Disease & Poison"
+      },
+      "speedMode": {
+        "add": "Add",
+        "multiply": "Multiply",
+        "set": "Set"
+      },
+      "specialMove": {
+        "waterWalk": "Water Walking",
+        "wallWalk": "Wall Walking",
+        "teleport": "Teleport"
+      },
+      "languageMode": {
+        "understand": "Understand",
+        "speak": "Speak",
+        "telepathy": "Telepathy"
+      },
+      "actionKind": {
+        "action": "Action",
+        "bonus": "Bonus Action",
+        "reaction": "Reaction"
+      },
+      "initiativeMode": {
+        "bonus": "Bonus",
+        "advantage": "Advantage"
+      },
+      "spellStat": {
+        "dc": "Save DC",
+        "attack": "Attack Bonus"
+      }
+    },
+    "Copy": {
+      "Title": "Copy Effects to {quality}",
+      "From": "Copy From",
+      "Option": "{quality} ({count})",
+      "Replace": "Replace Existing Effects",
+      "Confirm": "Copy Effects",
+      "NothingToCopy": "No other quality level has effects to copy."
+    },
+    "AddEffect": {
+      "Title": "Add Effect to {quality}",
+      "Choose": "Choose an effect…"
     }
   }
 }

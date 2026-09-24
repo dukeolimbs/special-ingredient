@@ -1,20 +1,56 @@
-{{!-- IngredientSheet (src/sheet.ts). One template, one branch per mode:
-      editor (GM, definition) · specimen · meal · soup. --}}
+{{!-- IngredientSheet (src/sheet.ts). Markup mirrors dnd5e's item sheet
+      (sheet-header, sheet-tabs, items-section cards) so the system's CSS
+      styles it. One branch per mode: editor · specimen · meal · soup. --}}
 <div class="si-sheet">
-  <header class="si-header">
-    {{#if mode_editor}}
-      <img class="si-img" src="{{img}}" data-action="editImage" data-edit="img" alt="">
-      <input class="si-name" type="text" name="name" value="{{name}}">
-    {{else}}
-      <img class="si-img" src="{{img}}" alt="">
-      <h1 class="si-name">{{name}}</h1>
-    {{/if}}
-  </header>
 
-  <div class="si-body">
+  {{!-- Header --}}
+  <section class="sheet-header">
+    <div class="left">
+      <img class="document-image" src="{{img}}" alt="{{name}}" {{#if mode_editor}}data-action="editImage" data-edit="img"{{/if}}>
+    </div>
+
+    <div class="middle identity-info">
+      {{#if mode_editor}}
+        <input class="document-name uninput" type="text" name="name" value="{{name}}"
+               placeholder="{{localize "SPECIAL_INGREDIENT.Ingredient.NewName"}}">
+      {{else}}
+        <div class="document-name">{{name}}</div>
+      {{/if}}
+      <ul class="subtitles unlist">
+        {{#each subtitles}}<li class="{{classes}}"><span>{{label}}</span></li>{{/each}}
+      </ul>
+    </div>
+
+    {{#if spoilageBlock}}
+    <div class="right si-spoilage {{#if spoiled}}spoiled{{/if}}">
+      {{#if isGM}}
+        <input class="si-spoilage-value uninput" type="number" name="flags.special-ingredient.specimen.spoilage"
+               value="{{spoilage}}" min="0" max="100" step="any" data-tooltip="SPECIAL_INGREDIENT.Field.Spoilage">
+      {{else}}
+        <span class="si-spoilage-value">{{spoilage}}</span>
+      {{/if}}
+      <span class="si-spoilage-label">{{localize "SPECIAL_INGREDIENT.Sheet.SpoilagePercent"}}</span>
+    </div>
+    {{/if}}
+  </section>
+
+  {{!-- Primary tabs --}}
+  {{#if tabs}}
+  <div>
+    <nav class="sheet-tabs tabs" data-group="primary">
+      {{#each tabs}}
+        <a class="{{#if active}}active{{/if}}" data-action="tab" data-group="primary" data-tab="{{id}}"><span>{{label}}</span></a>
+      {{/each}}
+    </nav>
+    <hr class="ampersand">
+  </div>
+  {{/if}}
+
+  {{!-- ================================ EDITOR ================================ --}}
   {{#if mode_editor}}
+  <section class="tab details {{#if tabActive.details}}active{{/if}}" data-group="primary" data-tab="details">
     <fieldset>
-      <legend>{{localize "SPECIAL_INGREDIENT.Sheet.Details"}}</legend>
+      <legend>{{localize "SPECIAL_INGREDIENT.Sheet.Senses"}}</legend>
       <div class="form-group stacked">
         <label>{{localize "SPECIAL_INGREDIENT.Field.Appearance"}}</label>
         <textarea name="flags.special-ingredient.ingredient.appearance" rows="2">{{ingredient.appearance}}</textarea>
@@ -27,11 +63,14 @@
         <label>{{localize "SPECIAL_INGREDIENT.Field.flavour"}}</label>
         <textarea name="flags.special-ingredient.ingredient.flavour" rows="2">{{ingredient.flavour}}</textarea>
       </div>
+    </fieldset>
+    <fieldset>
+      <legend>{{localize "SPECIAL_INGREDIENT.Sheet.Usage"}}</legend>
       <div class="form-group">
         <label>{{localize "SPECIAL_INGREDIENT.Field.spoilageRate"}}</label>
         <div class="form-fields">
           <input type="number" name="flags.special-ingredient.ingredient.spoilageRate" value="{{ingredient.spoilageRate}}" min="0" step="any">
-          <span class="units">%</span>
+          <span class="sep unit">%</span>
         </div>
       </div>
       <div class="form-group">
@@ -41,206 +80,238 @@
         </div>
       </div>
     </fieldset>
+  </section>
 
-    <nav class="tabs si-tabs" data-group="level">
+  <section class="tab effects {{#if tabActive.effects}}active{{/if}}" data-group="primary" data-tab="effects">
+    <nav class="sheet-tabs tabs nested-tabs" data-group="level">
       {{#each levels}}
-        <a class="{{#if active}}active{{/if}}" data-action="tab" data-group="level" data-tab="{{key}}">{{label}}</a>
+        <a class="si-quality-{{key}} {{#if active}}active{{/if}}" data-action="tab" data-group="level" data-tab="{{key}}"><span>{{label}}</span></a>
       {{/each}}
     </nav>
 
     {{#each levels}}
-    <section class="tab si-level {{#if active}}active{{/if}}" data-group="level" data-tab="{{key}}">
+    <div class="tab si-level {{#if active}}active{{/if}}" data-group="level" data-tab="{{key}}">
       {{#each effects}}
-      <div class="si-effect-edit">
-        <div class="si-effect-head">
-          <select name="{{path}}.type">
+      <div class="card si-effect-card">
+        <div class="header si-effect-header">
+          <dnd5e-icon class="si-effect-icon" src="{{icon}}"></dnd5e-icon>
+          <select name="{{path}}.type" aria-label="{{localize "SPECIAL_INGREDIENT.Sheet.EffectType"}}">
             {{#each typeGroups}}
             <optgroup label="{{label}}">
               {{#each types}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
             </optgroup>
             {{/each}}
           </select>
-          <a class="si-icon" data-action="deleteEffect" data-level="{{level}}" data-effect-id="{{id}}"
-             data-tooltip="SPECIAL_INGREDIENT.Sheet.DeleteEffect"><i class="fas fa-trash"></i></a>
+          <button type="button" class="unbutton config-button" data-action="deleteEffect" data-level="{{level}}"
+                  data-effect-id="{{id}}" data-tooltip="SPECIAL_INGREDIENT.Sheet.DeleteEffect"
+                  aria-label="{{localize "SPECIAL_INGREDIENT.Sheet.DeleteEffect"}}">
+            <i class="fas fa-trash" inert></i>
+          </button>
         </div>
 
-        {{#each params}}
-        <div class="form-group">
-          <label>{{label}}</label>
-          <div class="form-fields">
-            {{#if is_select}}
-              <select name="{{name}}">
-                <option value=""></option>
-                {{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+        <div class="si-effect-fields">
+          {{#each params}}
+          <div class="form-group">
+            <label>{{label}}</label>
+            <div class="form-fields">
+              {{#if is_select}}
+                <select name="{{name}}">
+                  <option value=""></option>
+                  {{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+                </select>
+              {{/if}}
+              {{#if is_number}}<input type="number" name="{{name}}" value="{{value}}" step="any">{{/if}}
+              {{#if is_text}}<input type="text" name="{{name}}" value="{{value}}">{{/if}}
+              {{#if is_formula}}<input type="text" name="{{name}}" value="{{value}}" placeholder="1d4">{{/if}}
+              {{#if is_boolean}}<input type="checkbox" name="{{name}}" {{#if checked}}checked{{/if}}>{{/if}}
+              {{#if is_spell}}
+                <div class="si-spell-drop {{#unless value}}empty{{/unless}}" data-path="{{../path}}">
+                  {{#if value}}
+                    <a class="content-link" data-action="openSpell" data-uuid="{{value}}">
+                      <i class="fas fa-book-open" inert></i> {{spellName}}
+                    </a>
+                    <button type="button" class="unbutton control-button" data-action="clearSpell" data-path="{{../path}}"
+                            data-tooltip="SPECIAL_INGREDIENT.Sheet.ClearSpell"
+                            aria-label="{{localize "SPECIAL_INGREDIENT.Sheet.ClearSpell"}}">
+                      <i class="fas fa-xmark" inert></i>
+                    </button>
+                  {{else}}
+                    {{localize "SPECIAL_INGREDIENT.Sheet.DropSpell"}}
+                  {{/if}}
+                </div>
+              {{/if}}
+            </div>
+          </div>
+          {{/each}}
+
+          <div class="form-group">
+            <label>{{localize "SPECIAL_INGREDIENT.Field.Target"}}</label>
+            <div class="form-fields">
+              <select name="{{path}}.target.kind">
+                {{#each targetOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
               </select>
-            {{/if}}
-            {{#if is_number}}<input type="number" name="{{name}}" value="{{value}}" step="any">{{/if}}
-            {{#if is_text}}<input type="text" name="{{name}}" value="{{value}}">{{/if}}
-            {{#if is_formula}}<input type="text" name="{{name}}" value="{{value}}" placeholder="1d4">{{/if}}
-            {{#if is_boolean}}<input type="checkbox" name="{{name}}" {{#if checked}}checked{{/if}}>{{/if}}
-            {{#if is_spell}}
-              <div class="si-spell-drop" data-path="{{../path}}">
-                {{#if value}}
-                  <a data-action="openSpell" data-uuid="{{value}}"><i class="fas fa-book-open"></i> {{spellName}}</a>
-                  <a class="si-icon" data-action="clearSpell" data-path="{{../path}}"
-                     data-tooltip="SPECIAL_INGREDIENT.Sheet.ClearSpell"><i class="fas fa-xmark"></i></a>
-                {{else}}
-                  <span class="si-hint">{{localize "SPECIAL_INGREDIENT.Sheet.DropSpell"}}</span>
+              {{#if showRange}}
+                <input type="number" name="{{path}}.target.range" value="{{range}}" min="0" step="5"
+                       placeholder="{{localize "SPECIAL_INGREDIENT.Sheet.Feet"}}">
+                <span class="sep unit">{{localize "SPECIAL_INGREDIENT.Sheet.Feet"}}</span>
+              {{/if}}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>{{localize "SPECIAL_INGREDIENT.Field.Duration"}}</label>
+            <div class="form-fields">
+              {{#if durationFixed}}
+                <span class="si-fixed-value">{{durationFixed}}</span>
+              {{else}}
+                {{#if showDurationValue}}
+                  <input type="number" name="{{path}}.duration.value" value="{{durationValue}}" min="1" step="1">
                 {{/if}}
-              </div>
-            {{/if}}
+                <select name="{{path}}.duration.units">
+                  {{#each durationOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+                </select>
+              {{/if}}
+            </div>
           </div>
-        </div>
-        {{/each}}
 
-        <div class="form-group">
-          <label>{{localize "SPECIAL_INGREDIENT.Field.Target"}}</label>
-          <div class="form-fields">
-            <select name="{{path}}.target.kind">
-              {{#each targetOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
-            </select>
-            {{#if showRange}}
-              <input type="number" name="{{path}}.target.range" value="{{range}}" min="0" step="5">
-              <span class="units">{{localize "SPECIAL_INGREDIENT.Sheet.Feet"}}</span>
-            {{/if}}
+          <div class="form-group stacked">
+            <label>{{localize "SPECIAL_INGREDIENT.Field.Description"}}</label>
+            <textarea name="{{path}}.description" rows="2">{{description}}</textarea>
           </div>
-        </div>
-
-        <div class="form-group">
-          <label>{{localize "SPECIAL_INGREDIENT.Field.Duration"}}</label>
-          <div class="form-fields">
-            {{#if showDurationValue}}
-              <input type="number" name="{{path}}.duration.value" value="{{durationValue}}" min="0" step="1">
-            {{/if}}
-            <select name="{{path}}.duration.units">
-              {{#each durationOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group stacked">
-          <label>{{localize "SPECIAL_INGREDIENT.Field.Description"}}</label>
-          <textarea name="{{path}}.description" rows="2">{{description}}</textarea>
         </div>
       </div>
-      {{else}}
-        <p class="si-hint">{{localize "SPECIAL_INGREDIENT.Sheet.NoEffects"}}</p>
       {{/each}}
 
-      <button type="button" data-action="addEffect" data-level="{{key}}">
-        <i class="fas fa-plus"></i> {{localize "SPECIAL_INGREDIENT.Sheet.AddEffect"}}
-      </button>
-    </section>
+      <div class="si-effect-actions">
+        <button type="button" data-action="addEffect" data-level="{{key}}">
+          <i class="fas fa-plus" inert></i> {{localize "SPECIAL_INGREDIENT.Sheet.AddEffect"}}
+        </button>
+        <button type="button" data-action="copyEffects" data-level="{{key}}">
+          <i class="fas fa-copy" inert></i> {{localize "SPECIAL_INGREDIENT.Sheet.CopyFrom"}}
+        </button>
+      </div>
+    </div>
     {{/each}}
+  </section>
   {{/if}}
 
+  {{!-- =============================== SPECIMEN =============================== --}}
   {{#if mode_specimen}}
-    <dl class="si-fields">
+  <section class="tab details {{#if tabActive.details}}active{{/if}}" data-group="primary" data-tab="details">
+    <fieldset>
+      <legend>{{localize "SPECIAL_INGREDIENT.Sheet.Senses"}}</legend>
       {{#each rows}}
-      <div class="si-field {{#unless known}}si-unknown{{/unless}}">
-        <dt>{{label}}</dt>
-        <dd>{{value}}</dd>
-        {{#if ../isGM}}{{#if field}}
-          <a class="si-reveal {{#if revealed}}active{{/if}}" data-action="toggleReveal" data-field="{{field}}"
-             data-tooltip="{{#if revealed}}SPECIAL_INGREDIENT.Sheet.Hide{{else}}SPECIAL_INGREDIENT.Sheet.Reveal{{/if}}">
-            <i class="fas {{#if revealed}}fa-eye{{else}}fa-eye-slash{{/if}}"></i>
-          </a>
-        {{/if}}{{/if}}
+      <div class="form-group si-field {{#unless known}}si-unknown{{/unless}}">
+        <label>{{label}}</label>
+        <div class="form-fields">
+          <span class="si-value">{{value}}</span>
+          {{#if ../isGM}}{{#if field}}
+            <button type="button" class="unbutton control-button si-reveal {{#if revealed}}active{{/if}}"
+                    data-action="toggleReveal" data-field="{{field}}"
+                    data-tooltip="{{#if revealed}}SPECIAL_INGREDIENT.Sheet.Hide{{else}}SPECIAL_INGREDIENT.Sheet.Reveal{{/if}}"
+                    aria-pressed="{{revealed}}">
+              <i class="fas {{#if revealed}}fa-eye{{else}}fa-eye-slash{{/if}}" inert></i>
+            </button>
+          {{/if}}{{/if}}
+        </div>
       </div>
       {{/each}}
-
-      {{#if item.isEmbedded}}
-      <div class="si-field">
-        <dt>{{localize "SPECIAL_INGREDIENT.Field.Spoilage"}}</dt>
-        <dd>
-          {{#if isGM}}
-            <input type="number" name="flags.special-ingredient.specimen.spoilage" value="{{spoilage}}" min="0" max="100" step="any">%
-          {{else}}
-            {{spoilage}}%
-          {{/if}}
-          {{#if spoiled}}<span class="si-badge si-spoiled">{{localize "SPECIAL_INGREDIENT.Sheet.Spoiled"}}</span>{{/if}}
-        </dd>
-      </div>
-      {{#if isGM}}
-      <div class="si-field">
-        <dt>{{localize "SPECIAL_INGREDIENT.Field.UsesRemaining"}}</dt>
-        <dd><input type="number" name="usesRemaining" value="{{usesRemaining}}" min="0" max="{{usesTotal}}" step="1"> / {{usesTotal}}</dd>
-      </div>
-      {{/if}}
-      {{/if}}
-    </dl>
-
-    <h2 class="si-section">{{localize "SPECIAL_INGREDIENT.Sheet.Effects"}}</h2>
-    {{#each effects}}
-      <div class="si-effect {{#unless known}}si-unknown{{/unless}}">
-        <div class="si-effect-body">
-        {{#if known}}
-          <div class="si-effect-title"><strong>{{type}}</strong> <span class="si-category">{{category}}</span></div>
-          {{#if params}}<div class="si-effect-params">{{params}}</div>{{/if}}
-          <div class="si-effect-meta">{{target}} · {{duration}}</div>
-          {{#if description}}<div class="si-effect-desc">{{description}}</div>{{/if}}
-        {{else}}
-          {{localize "SPECIAL_INGREDIENT.Sheet.Unknown"}}
-        {{/if}}
+      {{#if showUsesInput}}
+      <div class="form-group">
+        <label>{{localize "SPECIAL_INGREDIENT.Field.UsesRemaining"}}</label>
+        <div class="form-fields">
+          <input type="number" name="usesRemaining" value="{{usesRemaining}}" min="0" max="{{usesTotal}}" step="1">
+          <span class="sep">/</span>
+          <span>{{usesTotal}}</span>
         </div>
-        {{#if ../isGM}}
-          <a class="si-reveal {{#if revealed}}active{{/if}}" data-action="toggleReveal" data-effect-id="{{id}}"
-             data-tooltip="{{#if revealed}}SPECIAL_INGREDIENT.Sheet.Hide{{else}}SPECIAL_INGREDIENT.Sheet.Reveal{{/if}}">
-            <i class="fas {{#if revealed}}fa-eye{{else}}fa-eye-slash{{/if}}"></i>
-          </a>
-        {{/if}}
       </div>
-    {{else}}
-      <p class="si-hint">{{localize "SPECIAL_INGREDIENT.Sheet.Unknown"}}</p>
-    {{/each}}
+      {{/if}}
+    </fieldset>
+  </section>
 
-    {{#if canPrepare}}
-      <button type="button" class="si-primary" data-action="prepare">
-        <i class="fas fa-kitchen-set"></i> {{localize "SPECIAL_INGREDIENT.Sheet.Prepare"}}
-      </button>
-    {{/if}}
+  <section class="tab effects {{#if tabActive.effects}}active{{/if}}" data-group="primary" data-tab="effects">
+    {{> effectList}}
+  </section>
+
+  {{#if canPrepare}}
+  <footer class="form-footer si-footer">
+    <button type="button" data-action="prepare"><i class="fas fa-kitchen-set" inert></i> {{localize "SPECIAL_INGREDIENT.Sheet.Prepare"}}</button>
+  </footer>
+  {{/if}}
   {{/if}}
 
+  {{!-- ================================= MEAL ================================= --}}
   {{#if mode_meal}}
-    <p class="si-activation"><i class="fas fa-utensils"></i> {{activation}}</p>
-    <h2 class="si-section">{{localize "SPECIAL_INGREDIENT.Sheet.Effects"}}</h2>
-    {{#each effects}}
-      <div class="si-effect {{#unless known}}si-unknown{{/unless}}">
-        <div class="si-effect-body">
-        {{#if known}}
-          <div class="si-effect-title"><strong>{{type}}</strong> <span class="si-category">{{category}}</span></div>
-          {{#if params}}<div class="si-effect-params">{{params}}</div>{{/if}}
-          <div class="si-effect-meta">{{target}} · {{duration}}</div>
-          {{#if description}}<div class="si-effect-desc">{{description}}</div>{{/if}}
-        {{else}}
-          {{localize "SPECIAL_INGREDIENT.Sheet.Unknown"}}
-        {{/if}}
-        </div>
-        {{#if ../isGM}}
-          <a class="si-reveal {{#if revealed}}active{{/if}}" data-action="toggleReveal" data-effect-id="{{id}}"
-             data-tooltip="{{#if revealed}}SPECIAL_INGREDIENT.Sheet.Hide{{else}}SPECIAL_INGREDIENT.Sheet.Reveal{{/if}}">
-            <i class="fas {{#if revealed}}fa-eye{{else}}fa-eye-slash{{/if}}"></i>
-          </a>
-        {{/if}}
-      </div>
-    {{/each}}
-    {{#if canEat}}
-      <button type="button" class="si-primary" data-action="eat">
-        <i class="fas fa-utensils"></i> {{localize "SPECIAL_INGREDIENT.Sheet.Eat"}}
-      </button>
-    {{/if}}
+  <section class="tab effects active" data-group="primary" data-tab="effects">
+    {{> effectList}}
+  </section>
+  {{#if canEat}}
+  <footer class="form-footer si-footer">
+    <button type="button" data-action="eat"><i class="fas fa-utensils" inert></i> {{localize "SPECIAL_INGREDIENT.Sheet.Eat"}}</button>
+  </footer>
+  {{/if}}
   {{/if}}
 
+  {{!-- ================================= SOUP ================================= --}}
   {{#if mode_soup}}
-    {{#if canEat}}
-      <button type="button" class="si-primary" data-action="eat">
-        <i class="fas fa-utensils"></i> {{localize "SPECIAL_INGREDIENT.Sheet.Eat"}}
-      </button>
-    {{/if}}
+  {{#if canEat}}
+  <footer class="form-footer si-footer">
+    <button type="button" data-action="eat"><i class="fas fa-utensils" inert></i> {{localize "SPECIAL_INGREDIENT.Sheet.Eat"}}</button>
+  </footer>
+  {{/if}}
   {{/if}}
 
   {{#if mode_invalid}}
-    <p class="si-hint">{{localize "SPECIAL_INGREDIENT.Sheet.Invalid"}}</p>
+    <p class="si-empty">{{localize "SPECIAL_INGREDIENT.Sheet.Invalid"}}</p>
   {{/if}}
-  </div>
 </div>
+
+{{#*inline "effectList"}}
+<section class="items-list">
+  <div class="items-section card">
+    <div class="items-header header">
+      <h3 class="item-name">{{localize "SPECIAL_INGREDIENT.Sheet.Effects"}}</h3>
+      <div class="item-header si-col-target">{{localize "SPECIAL_INGREDIENT.Field.Target"}}</div>
+      <div class="item-header si-col-duration">{{localize "SPECIAL_INGREDIENT.Field.Duration"}}</div>
+      {{#if @root.isGM}}<div class="item-header si-col-controls"></div>{{/if}}
+    </div>
+    <ol class="item-list unlist">
+      {{#each effects}}
+      <li class="item {{#unless known}}si-unknown{{/unless}}">
+        <div class="item-row">
+          <div class="item-name">
+            {{#if known}}
+              <dnd5e-icon class="item-image gold-icon" src="{{icon}}"></dnd5e-icon>
+              <div class="name name-stacked">
+                <span class="title">{{type}}</span>
+                <span class="subtitle">{{#if params}}{{params}}{{else}}{{category}}{{/if}}</span>
+              </div>
+            {{else}}
+              <span class="item-image gold-icon si-unknown-icon"><i class="fas fa-question" inert></i></span>
+              <div class="name name-stacked">
+                <span class="title">{{localize "SPECIAL_INGREDIENT.Sheet.Unknown"}}</span>
+              </div>
+            {{/if}}
+          </div>
+          <div class="item-detail si-col-target condensed {{#unless known}}empty{{/unless}}">{{#if known}}{{target}}{{/if}}</div>
+          <div class="item-detail si-col-duration condensed {{#unless known}}empty{{/unless}}">{{#if known}}{{duration}}{{/if}}</div>
+          {{#if @root.isGM}}
+          <div class="item-detail si-col-controls">
+            <button type="button" class="unbutton control-button si-reveal {{#if revealed}}active{{/if}}"
+                    data-action="toggleReveal" data-effect-id="{{id}}"
+                    data-tooltip="{{#if revealed}}SPECIAL_INGREDIENT.Sheet.Hide{{else}}SPECIAL_INGREDIENT.Sheet.Reveal{{/if}}"
+                    aria-pressed="{{revealed}}">
+              <i class="fas {{#if revealed}}fa-eye{{else}}fa-eye-slash{{/if}}" inert></i>
+            </button>
+          </div>
+          {{/if}}
+        </div>
+        {{#if known}}{{#if description}}<div class="si-effect-desc">{{description}}</div>{{/if}}{{/if}}
+      </li>
+      {{else}}
+      <li class="item si-empty">{{localize "SPECIAL_INGREDIENT.Sheet.NoEffects"}}</li>
+      {{/each}}
+    </ol>
+  </div>
+</section>
+{{/inline}}

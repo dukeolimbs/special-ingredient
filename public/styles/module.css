@@ -1,207 +1,376 @@
-/* Special Ingredient styles. Everything is scoped under .special-ingredient
-   (the sheet's class and the chat card's root) to avoid clashing with core. */
+/* Special Ingredient styles.
+   The sheet carries dnd5e's own classes (.dnd5e2.sheet.item) and chat cards use
+   dnd5e's item-card markup, so the system stylesheet does most of the work:
+   parchment, Modesto/Roboto fonts, gold borders, tabs, cards and pills. This
+   file only covers what dnd5e has no equivalent for, and reuses its variables. */
 
+/* -------------------------------------------- */
+/*  Quality colours                             */
+/* -------------------------------------------- */
+
+/* Used wherever a quality level is named: sheet sub-tabs, header subtitle, chat pill.
+   Decent follows the theme's primary text colour so it reads in light and dark. */
+.special-ingredient {
+  --si-quality-wretched: #d93b3b;
+  --si-quality-subpar: #8b90a8;
+  --si-quality-decent: var(--color-text-primary);
+  --si-quality-excellent: #3fb24b;
+  --si-quality-exceptional: #f2a922;
+}
+
+.special-ingredient .si-quality-wretched { --si-quality: var(--si-quality-wretched); }
+.special-ingredient .si-quality-subpar { --si-quality: var(--si-quality-subpar); }
+.special-ingredient .si-quality-decent { --si-quality: var(--si-quality-decent); }
+.special-ingredient .si-quality-excellent { --si-quality: var(--si-quality-excellent); }
+.special-ingredient .si-quality-exceptional { --si-quality: var(--si-quality-exceptional); }
+
+.special-ingredient [class*="si-quality-"] {
+  color: var(--si-quality);
+}
+
+/* Quality sub-tabs: coloured even when inactive; the active one is full strength with dnd5e's gold underline. */
+.special-ingredient.application .sheet-tabs.nested-tabs [data-tab][class*="si-quality-"] {
+  color: var(--si-quality);
+  opacity: 0.6;
+}
+
+.special-ingredient.application .sheet-tabs.nested-tabs [data-tab][class*="si-quality-"].active,
+.special-ingredient.application .sheet-tabs.nested-tabs [data-tab][class*="si-quality-"]:hover {
+  opacity: 1;
+}
+
+.special-ingredient.chat-card .pill[class*="si-quality-"] .label {
+  color: var(--si-quality);
+}
+
+/* -------------------------------------------- */
+/*  Sheet layout                                */
+/* -------------------------------------------- */
+
+/* Let the header, tabs and tab bodies sit directly in dnd5e's flex window-content. */
 .special-ingredient .si-sheet {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  gap: 0.5rem;
+  display: contents;
 }
 
-.special-ingredient .si-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.special-ingredient .si-img {
-  width: 64px;
-  height: 64px;
-  flex: none;
-  object-fit: cover;
-  border-radius: 6px;
-}
-
-.special-ingredient .si-header img[data-action] {
-  cursor: pointer;
-}
-
-.special-ingredient .si-name {
-  flex: 1;
-  margin: 0;
-  font-size: 1.5rem;
-}
-
-.special-ingredient input.si-name {
-  height: 2.25rem;
-}
-
-.special-ingredient .si-body {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.special-ingredient .si-tabs {
-  display: flex;
-  gap: 0.25rem;
-  border-bottom: 1px solid var(--color-border, #7a7971);
-}
-
-.special-ingredient .si-tabs a {
-  padding: 0.25rem 0.6rem;
-  border-radius: 4px 4px 0 0;
-}
-
-.special-ingredient .si-tabs a.active {
+.special-ingredient.sheet .sheet-header .subtitles .si-spoiled {
+  color: var(--dnd5e-color-crimson);
   font-weight: bold;
-  text-shadow: 0 0 6px var(--color-shadow-primary, #ff6400);
 }
 
-.special-ingredient .si-level {
-  display: none;
-  flex-direction: column;
-  gap: 0.5rem;
+/* Spoilage readout in the header's right column, styled like dnd5e's header stats. */
+.special-ingredient .si-spoilage {
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
 }
 
-.special-ingredient .si-level.active {
-  display: flex;
+.special-ingredient .si-spoilage .si-spoilage-value {
+  font-family: var(--dnd5e-font-modesto);
+  font-size: var(--font-size-32);
+  font-weight: bold;
+  line-height: 1;
+  text-align: center;
 }
 
-.special-ingredient .si-effect-edit {
-  border: 1px solid var(--color-border, #7a7971);
-  border-radius: 6px;
-  padding: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+.special-ingredient .si-spoilage input.si-spoilage-value {
+  width: 80px;
+  height: 36px;
 }
 
-.special-ingredient .si-effect-head {
+.special-ingredient .si-spoilage .si-spoilage-label {
+  font-family: var(--dnd5e-font-roboto-condensed);
+  font-size: var(--font-size-11);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.special-ingredient .si-spoilage.spoiled .si-spoilage-value {
+  color: var(--dnd5e-color-crimson);
+}
+
+/* Numbers here are small (percentages, uses, feet, rounds); don't stretch them across the row. */
+.special-ingredient .form-fields input[type="number"] {
+  flex: 0 0 64px;
+  width: 64px;
+  text-align: center;
+}
+
+.special-ingredient .form-fields:has(> input[type="number"]) {
+  justify-content: flex-start;
+}
+
+/* dnd5e's .tab offsets its content to the left to make room for a one-sided scrollbar
+   gutter. Our tabs contain centred content (quality tabs, Add Effect), so reserve the
+   gutter on both edges and pad symmetrically instead. */
+.special-ingredient.sheet.item .tab.details,
+.special-ingredient.sheet.item .tab.effects {
+  /* Enough padding inside the scroll area that focus glows on edge-to-edge fields aren't clipped. */
+  margin: -8px -10px;
+  padding: 8px 10px;
+  overflow: hidden auto;
+  scrollbar-gutter: stable both-edges;
+}
+
+/* The window is resizable: the active tab takes the remaining height and scrolls, and
+   can shrink below its content when the window is made smaller. */
+.special-ingredient.sheet.item .tab.details.active,
+.special-ingredient.sheet.item .tab.effects.active {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+}
+
+/* Keep cards from clipping the focus glow of the fields inside them. */
+.special-ingredient .card {
+  overflow: visible;
+}
+
+/* Form fields: dnd5e's dark card background swallows selects and textareas that have no
+   fill of their own. Give every field a faint fill and outline derived from the theme's
+   text colour, so they read in light and dark. The name and spoilage "uninputs" and the
+   effect-type select in the card header are left bare on purpose. */
+.special-ingredient .window-content :is(select, textarea, input[type="text"], input[type="number"]):not(.uninput, .si-effect-header select) {
+  background: color-mix(in srgb, var(--color-text-primary) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-text-primary) 14%, transparent);
+  border-radius: 4px;
+  color: var(--color-text-primary);
+  /* dnd5e's body size, so values sit a step below their bold labels. */
+  font-family: var(--dnd5e-font-roboto);
+  font-size: var(--font-size-13);
+}
+
+.special-ingredient .window-content :is(select, textarea, input):not(.uninput):focus-visible {
+  outline: none;
+  border-color: var(--dnd5e-color-gold);
+  box-shadow: 0 0 6px var(--dnd5e-color-gold);
+}
+
+/* Placeholder hints (e.g. "1d4", "ft") readable but still clearly not a value. */
+.special-ingredient .window-content :is(input, textarea)::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.8;
+  font-style: italic;
+}
+
+/* Breathing room between rows now that fields have visible outlines. */
+.special-ingredient .window-content .form-group + .form-group {
+  margin-top: 3px;
+}
+
+.special-ingredient .window-content .form-group.stacked > label {
+  margin-bottom: 4px;
+}
+
+.special-ingredient .window-content select option,
+.special-ingredient .window-content select optgroup {
+  background: var(--dnd5e-background-card, #222);
+  color: var(--color-text-primary);
+}
+
+/* Buttons on the sheet (Add Effect, Copy from…, Prepare Meal, Eat) in dnd5e's gold-button
+   colours: black fill, gold border and text. Set through core's button variables so
+   hover, focus and disabled states keep working. */
+.special-ingredient .window-content button:not(.unbutton) {
+  --button-background-color: var(--dnd5e-color-black);
+  --button-border-color: var(--dnd5e-color-gold);
+  --button-text-color: var(--dnd5e-color-gold);
+  --button-hover-background-color: var(--dnd5e-color-black);
+  --button-hover-border-color: var(--dnd5e-color-gold);
+  --button-hover-text-color: var(--color-light-1, #fff);
+  width: auto;
+  min-width: max-content;
+  padding-inline: 12px;
+  white-space: nowrap;
+  box-shadow: 0 0 6px var(--dnd5e-shadow-45);
+}
+
+.special-ingredient .window-content button:not(.unbutton):is(:hover, :focus-visible) {
+  box-shadow: 0 0 6px var(--dnd5e-color-gold);
+}
+
+/* The quality tab row never scrolls or shrinks. */
+.special-ingredient .sheet-tabs.nested-tabs {
+  flex: none;
+  overflow: visible;
+}
+
+/* Quality sub-tabs sit inside the Effects tab; don't give them their own scroll area. */
+.special-ingredient.sheet.item .tab.si-level {
+  max-height: none;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+}
+
+/* -------------------------------------------- */
+/*  Effect editor cards                          */
+/* -------------------------------------------- */
+
+.special-ingredient .si-effect-card .si-effect-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 6px;
+  padding: 4px 8px;
 }
 
-.special-ingredient .si-effect-head select {
-  flex: 1;
-}
-
-.special-ingredient .si-icon {
+.special-ingredient .si-effect-card .si-effect-icon {
+  --icon-size: 20px;
+  --icon-fill: var(--dnd5e-color-gold);
   flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+/* The effect-type picker sits on the dark red header bar: a light translucent box so it
+   reads as a dropdown without breaking the header. */
+.special-ingredient .window-content .si-effect-card .si-effect-header select {
+  flex: 1;
+  height: 26px;
+  padding-inline: 6px;
+  color: inherit;
+  font-family: var(--dnd5e-font-roboto);
+  font-size: var(--font-size-13);
+  font-weight: normal;
+  background: rgb(0 0 0 / 20%);
+  border: 1px solid rgb(255 255 255 / 35%);
+  border-radius: 4px;
   cursor: pointer;
+}
+
+.special-ingredient .window-content .si-effect-card .si-effect-header select:is(:hover, :focus-visible) {
+  outline: none;
+  border-color: var(--dnd5e-color-gold);
+  box-shadow: 0 0 6px var(--dnd5e-color-gold);
+}
+
+.special-ingredient .si-effect-card .si-effect-fields {
+  padding: 6px 8px 8px;
 }
 
 .special-ingredient .si-spell-drop {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  min-height: 1.75rem;
-  padding: 0 0.5rem;
-  border: 1px dashed var(--color-border, #7a7971);
+  justify-content: space-between;
+  gap: 6px;
+  min-height: var(--input-height, 26px);
+  padding: 0 6px;
+  border: var(--dnd5e-border-dashed);
   border-radius: 4px;
 }
 
-.special-ingredient .si-hint {
-  opacity: 0.7;
+.special-ingredient .si-spell-drop.empty {
+  justify-content: center;
   font-style: italic;
+  color: var(--color-text-secondary);
 }
 
-.special-ingredient .units {
-  flex: none;
-  opacity: 0.8;
+.special-ingredient .si-fixed-value {
+  line-height: var(--input-height, 26px);
+  font-style: italic;
+  color: var(--color-text-secondary);
 }
 
-.special-ingredient .si-fields {
-  margin: 0;
+.special-ingredient .si-effect-actions {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  justify-content: center;
+  gap: 8px;
 }
 
-.special-ingredient .si-field {
-  display: grid;
-  grid-template-columns: 11rem 1fr auto;
-  align-items: start;
-  gap: 0.5rem;
+.special-ingredient .si-effect-actions button {
+  flex: none;
 }
 
-.special-ingredient .si-field dt {
-  font-weight: bold;
-}
+/* -------------------------------------------- */
+/*  Specimen details & effect list               */
+/* -------------------------------------------- */
 
-.special-ingredient .si-field dd {
-  margin: 0;
+.special-ingredient .si-field .si-value {
+  flex: 1;
   white-space: pre-wrap;
+  line-height: var(--input-height, 26px);
 }
 
-.special-ingredient .si-field dd input[type="number"] {
-  width: 5rem;
-}
-
-.special-ingredient .si-unknown {
-  opacity: 0.6;
+.special-ingredient .si-unknown .si-value,
+.special-ingredient .item.si-unknown .title {
   font-style: italic;
+  color: var(--color-text-secondary);
 }
 
 .special-ingredient .si-reveal {
-  cursor: pointer;
-  opacity: 0.6;
+  flex: none;
+  opacity: 0.5;
 }
 
 .special-ingredient .si-reveal.active {
   opacity: 1;
+  color: var(--dnd5e-color-gold);
 }
 
-.special-ingredient .si-badge {
-  margin-left: 0.5rem;
-  padding: 0 0.4rem;
-  border-radius: 4px;
-  font-size: 0.85em;
-  font-weight: bold;
-  font-style: normal;
+.special-ingredient .items-section .si-col-target,
+.special-ingredient .items-section .si-col-duration {
+  width: 110px;
 }
 
-.special-ingredient .si-spoiled {
-  background: #7a2e1f;
-  color: #fff;
+.special-ingredient .items-section .si-col-controls {
+  width: 32px;
 }
 
-.special-ingredient .si-section {
-  margin: 0.5rem 0 0;
-  font-size: 1.1rem;
-  border-bottom: 1px solid var(--color-border, #7a7971);
-}
-
-.special-ingredient .si-effect {
-  display: flex;
-  align-items: start;
-  gap: 0.5rem;
-  padding: 0.35rem 0;
-  border-bottom: 1px dotted var(--color-border, #7a7971);
-}
-
-.special-ingredient .si-effect-body {
-  flex: 1;
-}
-
-.special-ingredient .si-category,
-.special-ingredient .si-effect-meta {
-  opacity: 0.75;
-  font-size: 0.9em;
+.special-ingredient .si-unknown-icon {
+  display: grid;
+  place-content: center;
+  color: var(--dnd5e-color-gold);
+  background: var(--dnd5e-background-alt-1);
 }
 
 .special-ingredient .si-effect-desc {
+  padding: 0 8px 6px 46px;
   white-space: pre-wrap;
+  color: var(--color-text-secondary);
 }
 
-.special-ingredient .si-primary {
-  margin-top: 0.5rem;
+.special-ingredient .item.si-empty,
+.special-ingredient .si-empty {
+  padding: 8px;
+  text-align: center;
+  font-style: italic;
+  color: var(--color-text-secondary);
 }
 
-.special-ingredient.si-chat .si-effect {
-  display: block;
+.special-ingredient .si-footer {
+  margin-top: 0;
+}
+
+/* -------------------------------------------- */
+/*  Chat card                                    */
+/* -------------------------------------------- */
+
+.special-ingredient.chat-card .si-chat-effects {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.special-ingredient.chat-card .si-chat-effect {
+  display: flex;
+  align-items: start;
+  gap: 6px;
+}
+
+.special-ingredient.chat-card .si-chat-effect .gold-icon {
+  --gold-icon-size: 24px;
+  --icon-fill: var(--dnd5e-color-gold);
+}
+
+.special-ingredient.chat-card .si-chat-effect .title {
+  font-weight: bold;
+}
+
+.special-ingredient.chat-card .si-chat-effect .subtitle {
+  font-family: var(--dnd5e-font-roboto-condensed);
+  color: var(--color-text-secondary);
+}
+
+.special-ingredient.chat-card .si-chat-desc {
+  white-space: pre-wrap;
 }

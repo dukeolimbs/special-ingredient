@@ -24,6 +24,7 @@ export default tseslint.config(
         Item: "readonly",
         ActiveEffect: "readonly",
         ChatMessage: "readonly",
+        Folder: "readonly",
         fromUuid: "readonly",
         fromUuidSync: "readonly",
         window: "readonly",

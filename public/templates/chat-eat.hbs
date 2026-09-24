@@ -1,16 +1,41 @@
 {{!-- Chat card posted when a meal or Soup is eaten (src/actions.ts eat()).
-      Soup passes no quality or effects, so the card stays quiet. --}}
-<div class="special-ingredient si-chat">
-  <p>{{localize "SPECIAL_INGREDIENT.Chat.Eats" actor=actor item=item}}</p>
+      Uses dnd5e's item-card markup so the system styles it and handles the
+      collapsible header. Soup passes no effects, so its card stays quiet. --}}
+<div class="chat-card item-card special-ingredient">
+  <section class="card-header description {{#if effects}}collapsible{{/if}}">
+    <header class="summary">
+      <img class="gold-icon" src="{{img}}" alt="{{item}}">
+      <div class="name-stacked border">
+        <span class="title">{{item}}</span>
+        <span class="subtitle">{{localize "SPECIAL_INGREDIENT.Chat.Eats" actor=actor}}</span>
+      </div>
+      {{#if effects}}<i class="fas fa-chevron-down fa-fw" inert></i>{{/if}}
+    </header>
+
+    {{#if effects}}
+    <section class="details collapsible-content card-content">
+      <div class="wrapper">
+        <ul class="si-chat-effects unlist">
+          {{#each effects}}
+          <li class="si-chat-effect">
+            <dnd5e-icon class="gold-icon" src="{{icon}}"></dnd5e-icon>
+            <div class="name-stacked">
+              <span class="title">{{type}}</span>
+              <span class="subtitle">{{#if params}}{{params}} · {{/if}}{{target}} · {{duration}}</span>
+              {{#if description}}<span class="si-chat-desc">{{description}}</span>{{/if}}
+            </div>
+          </li>
+          {{/each}}
+        </ul>
+      </div>
+    </section>
+    {{/if}}
+  </section>
+
   {{#if quality}}
-    <p class="si-chat-quality">{{localize "SPECIAL_INGREDIENT.Field.quality"}}: <strong>{{quality}}</strong></p>
+  <ul class="card-footer pills unlist">
+    <li class="pill transparent"><span class="label">{{localize "SPECIAL_INGREDIENT.Sheet.Meal"}}</span></li>
+    <li class="pill transparent si-quality-{{qualityKey}}"><span class="label">{{quality}}</span></li>
+  </ul>
   {{/if}}
-  {{#each effects}}
-    <div class="si-effect">
-      <div class="si-effect-title"><strong>{{type}}</strong> <span class="si-category">{{category}}</span></div>
-      {{#if params}}<div class="si-effect-params">{{params}}</div>{{/if}}
-      <div class="si-effect-meta">{{target}} · {{duration}}</div>
-      {{#if description}}<div class="si-effect-desc">{{description}}</div>{{/if}}
-    </div>
-  {{/each}}
 </div>
