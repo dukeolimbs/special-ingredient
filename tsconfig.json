@@ -12,8 +12,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "sourceMap": true,
-    "outDir": "dist"
+    // Vite does the build; tsc only typechecks. With no emit there is no outDir,
+    // so TypeScript 6+ does not require an explicit rootDir.
+    "noEmit": true
   },
   "include": ["src"]
 }
